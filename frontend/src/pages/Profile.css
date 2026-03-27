@@ -1,0 +1,55 @@
+.profile-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.profile-header {
+  margin-bottom: 24px;
+}
+
+.avatar-section {
+  text-align: center;
+}
+
+.user-name {
+  font-size: 28px;
+  color: #262626;
+  margin-bottom: 8px;
+}
+
+.user-phone {
+  color: #8c8c8c;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.user-bmi {
+  padding-top: 16px;
+}
+
+.user-bmi .ant-statistic-title {
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.user-bmi .ant-statistic-content {
+  font-size: 28px;
+}
+
+.profile-form {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .user-name {
+    font-size: 22px;
+  }
+
+  .user-phone {
+    font-size: 14px;
+  }
+
+  .user-bmi .ant-statistic-content {
+    font-size: 24px;
+  }
+}

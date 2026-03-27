@@ -1,0 +1,63 @@
+.tcm-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.intro-card {
+  margin-bottom: 24px;
+}
+
+.intro-card p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #595959;
+  margin-bottom: 16px;
+}
+
+.constitutions-card {
+  margin-bottom: 24px;
+}
+
+.constitution-card {
+  height: 100%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.constitution-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.constitution-emoji {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.constitution-card h3 {
+  font-size: 18px;
+  color: #262626;
+  margin-bottom: 12px;
+}
+
+.constitution-desc {
+  color: #8c8c8c;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 48px;
+}
+
+@media (max-width: 768px) {
+  .constitution-emoji {
+    font-size: 40px;
+  }
+
+  .constitution-card h3 {
+    font-size: 16px;
+  }
+
+  .constitution-desc {
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "health-app-frontend",
+  "version": "1.0.0",
+  "description": "全生命周期健康管理App前端",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "start:mock": "REACT_APP_API_URL=http://localhost:3000 react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "keywords": [
+    "health",
+    "nutrition",
+    "tcm"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@ant-design/icons": "^5.2.6",
+    "@capacitor/android": "^8.3.0",
+    "antd": "^5.12.0",
+    "axios": "^1.6.2",
+    "chart.js": "^4.4.1",
+    "dayjs": "^1.11.10",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "react-query": "^3.39.3",
+    "react-router-dom": "^6.20.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "react-scripts": "^5.0.1",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^4.9.5"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
