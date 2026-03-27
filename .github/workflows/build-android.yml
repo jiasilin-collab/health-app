@@ -44,6 +44,18 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
+      - name: Check build output
+        run: |
+          echo "=== Checking frontend build output ==="
+          if [ -d "frontend/build" ]; then
+            echo "Build directory exists"
+            ls -la frontend/build | head -20
+          else
+            echo "ERROR: Build directory not found!"
+            echo "Please check if 'npm run build' failed"
+            exit 1
+          fi
+
       - name: Install root dependencies
         run: npm ci --registry=https://registry.npmmirror.com
 
@@ -57,35 +69,83 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Check android project
+        run: |
+          echo "=== Checking Android project ==="
+          if [ -d "android/app" ]; then
+            echo "Android app directory exists"
+            ls -la android/app | head -20
+          else
+            echo "ERROR: Android app directory not found!"
+            exit 1
+          fi
+
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
-      - name: Build Debug APK with retry
+      - name: Build Debug APK with error handling
+        id: build_debug
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --no-parallel --refresh-dependencies || echo "Build failed, retrying..." || sleep 10 || echo "Retry 1" || sleep 10 || echo "Retry 2" || sleep 10 || ./gradlew assembleDebug --no-daemon --no-parallel --refresh-dependencies
+          set -e
+          ./gradlew assembleDebug --no-daemon --no-parallel --refresh-dependencies
+          if [ $? -eq 0 ]; then
+            echo "=== Debug build SUCCESS ==="
+            echo "Checking if APK exists..."
+            if [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
+              echo "APK file found!"
+              ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+            else
+              echo "WARNING: APK file not found!"
+              echo "Build directory contents:"
+              ls -la android/app/build/outputs/apk/debug/ || true
+              exit 1
+            fi
+          else
+            echo "=== Debug build FAILED ==="
+            exit 1
+          fi
         env:
           GRADLE_OPTS: -Dgradle.user.home=$HOME/.gradle
           JAVA_HOME: ${{ env.JAVA_HOME }}
 
-      - name: Build Release APK with retry
+      - name: Build Release APK with error handling
+        id: build_release
+        if: steps.build_debug.outcome == 'success'
         run: |
           cd android
-          ./gradlew assembleRelease --no-daemon --no-parallel --refresh-dependencies || echo "Build failed, retrying..." || sleep 10 || echo "Retry 1" || sleep 10 || echo "Retry 2" || sleep 10 || ./gradlew assembleRelease --no-daemon --no-parallel --refresh-dependencies
+          set -e
+          ./gradlew assembleRelease --no-daemon --no-parallel --refresh-dependencies
+          if [ $? -eq 0 ]; then
+            echo "=== Release build SUCCESS ==="
+            echo "Checking if APK exists..."
+            if [ -f "android/app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
+              echo "APK file found!"
+              ls -lh android/app/build/outputs/apk/release/app-release-unsigned.apk
+            else
+              echo "WARNING: APK file not found!"
+              echo "Build directory contents:"
+              ls -la android/app/build/outputs/apk/release/ || true
+              exit 1
+            fi
+          else
+            echo "=== Release build SKIPPED (Debug build failed) ==="
+            exit 1
+          fi
         env:
-          GRADLE_OPTS: -Dgradle.user.home=$$HOME/.gradle
+          GRADLE_OPTS: -Dgradle.user.home=$HOME/.gradle
           JAVA_HOME: ${{ env.JAVA_HOME }}
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
-        if: success()
+        if: steps.build_debug.outcome == 'success'
         with:
           name: health-app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
-        if: success()
+        if: steps.build_release.outcome == 'success'
         with:
           name: health-app-release
           path: android/app/build/outputs/apk/release/app-release-unsigned.apk
@@ -93,20 +153,24 @@ jobs:
       - name: Build Summary
         if: always()
         run: |
-          echo "## 📱 APK 构建完成" >> $GITHUB_STEP_SUMMARY
+          echo "## 📱 APK 构建结果" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ job.status }}" == "success" ]; then
+          if [ "${{ steps.build_debug.outcome }}" == "success" ]; then
             echo "### ✅ 构建成功" >> $GITHUB_STEP_SUMMARY
-            echo "- **Debug APK**: 点击 Actions 运行页面底部的 Artifacts 下载" >> $GITHUB_STEP_SUMMARY
-            echo "- **Release APK**: 点击 Actions 运行页面底部的 Artifacts 下载" >> $GITHUB_STEP_SUMMARY
+            echo "- **Debug APK**: 已上传到 Artifacts" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ steps.build_release.outcome }}" == "success" ]; then
+              echo "- **Release APK**: 已上传到 Artifacts" >> $GITHUB_STEP_SUMMARY
+            fi
           else
             echo "### ❌ 构建失败" >> $GITHUB_STEP_SUMMARY
-            echo "请检查错误日志，或点击 Re-run jobs 重试" >> $GITHUB_STEP_SUMMARY
+            echo "- 请查看下方构建日志中的错误信息" >> $GITHUB_STEP_SUMMARY
+            echo "- 常见错误：Gradle 下载失败 / 前端构建失败 / Capacitor 同步失败" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 注意事项" >> $GITHUB_STEP_SUMMARY
-          echo "Release APK 是未签名的版本，如需正式发布需要进行签名" >> $GITHUB_STEP_SUMMARY
+          echo "- Release APK 是未签名的版本，如需正式发布需要进行签名" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 镜像源" >> $GITHUB_STEP_SUMMARY
-          echo "- npm: https://registry.npmmirror.com" >> $GITHUB_STEP_SUMMARY
-          echo "- Gradle: https://mirrors.aliyun.com/gradle/" >> $GITHUB_STEP_SUMMARY
+          echo "### 构建信息" >> $GITHUB_STEP_SUMMARY
+          echo "- 工作流: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 运行 ID: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 提交: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
