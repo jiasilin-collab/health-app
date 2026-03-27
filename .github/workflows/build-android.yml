@@ -47,10 +47,10 @@ jobs:
       - name: Install root dependencies
         run: npm ci --registry=https://registry.npmmirror.com
 
-      - name: Configure Gradle with mirror
+      - name: Configure Gradle with Aliyun mirror
         run: |
           cd android
-          echo "distributionUrl=https://mirrors.cloud.tencent.com/gradle/gradle-8.14.3-all.zip" > gradle.properties
+          echo "distributionUrl=https://mirrors.aliyun.com/gradle/gradle-8.14.3-all.zip" > gradle.properties
           echo "GRADLE_OPTS=-Dgradle.user.home=$HOME/.gradle" >> $GITHUB_ENV
           echo "GRADLE_USER_HOME=$HOME/.gradle" >> $GITHUB_ENV
 
@@ -73,7 +73,7 @@ jobs:
           cd android
           ./gradlew assembleRelease --no-daemon --no-parallel --refresh-dependencies || echo "Build failed, retrying..." || sleep 10 || echo "Retry 1" || sleep 10 || echo "Retry 2" || sleep 10 || ./gradlew assembleRelease --no-daemon --no-parallel --refresh-dependencies
         env:
-          GRADLE_OPTS: -Dgradle.user.home=$HOME/.gradle
+          GRADLE_OPTS: -Dgradle.user.home=$$HOME/.gradle
           JAVA_HOME: ${{ env.JAVA_HOME }}
 
       - name: Upload Debug APK
@@ -106,3 +106,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 注意事项" >> $GITHUB_STEP_SUMMARY
           echo "Release APK 是未签名的版本，如需正式发布需要进行签名" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 镜像源" >> $GITHUB_STEP_SUMMARY
+          echo "- npm: https://registry.npmmirror.com" >> $GITHUB_STEP_SUMMARY
+          echo "- Gradle: https://mirrors.aliyun.com/gradle/" >> $GITHUB_STEP_SUMMARY
