@@ -36,6 +36,17 @@ jobs:
           path: frontend/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
 
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            android/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Install frontend dependencies
         working-directory: ./frontend
         run: npm ci --legacy-peer-deps --registry=https://registry.npmmirror.com
@@ -64,9 +75,26 @@ jobs:
           cd android
           echo "=== Gradle wrapper configuration ==="
           cat gradle/wrapper/gradle-wrapper.properties
+          echo ""
+          echo "=== Android project structure ==="
+          ls -la
+          echo ""
+          echo "=== app directory contents ==="
+          ls -la app/ | head -20
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: |
+          echo "=== Syncing Capacitor Android ==="
+          npx cap sync android
+          echo ""
+          echo "=== Checking Capacitor sync result ==="
+          if [ -d "android/app/src/main/assets/public" ]; then
+            echo "✅ Capacitor sync successful - web assets copied"
+            ls -la android/app/src/main/assets/public | head -10
+          else
+            echo "❌ ERROR: Capacitor sync failed - no web assets found"
+            exit 1
+          fi
 
       - name: Check android project
         run: |
@@ -82,10 +110,20 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.2'
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
+
       - name: Build Debug APK with detailed error logging
         id: build_debug
         run: |
           cd android
+          echo "=== Environment Information ==="
+          echo "Java version:"
+          java -version
+          echo ""
           echo "=== Starting Gradle build ==="
           echo "Gradle version:"
           ./gradlew --version
@@ -114,9 +152,6 @@ jobs:
             tail -50 build.log
             exit 1
           fi
-        env:
-          GRADLE_OPTS: -Dgradle.user.home=$HOME/.gradle
-          JAVA_HOME: ${{ env.JAVA_HOME }}
 
       - name: Build Release APK with detailed error logging
         id: build_release
@@ -147,9 +182,6 @@ jobs:
             tail -50 release-build.log
             exit 1
           fi
-        env:
-          GRADLE_OPTS: -Dgradle.user.home=$HOME/.gradle
-          JAVA_HOME: ${{ env.JAVA_HOME }}
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
