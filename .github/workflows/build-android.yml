@@ -59,12 +59,11 @@ jobs:
       - name: Install root dependencies
         run: npm ci --registry=https://registry.npmmirror.com
 
-      - name: Configure Gradle with Aliyun mirror
+      - name: Display Gradle version
         run: |
           cd android
-          echo "distributionUrl=https://mirrors.aliyun.com/gradle/gradle-8.14.3-all.zip" > gradle.properties
-          echo "GRADLE_OPTS=-Dgradle.user.home=$HOME/.gradle" >> $GITHUB_ENV
-          echo "GRADLE_USER_HOME=$HOME/.gradle" >> $GITHUB_ENV
+          echo "=== Gradle wrapper configuration ==="
+          cat gradle/wrapper/gradle-wrapper.properties
 
       - name: Sync Capacitor
         run: npx cap sync android
@@ -92,13 +91,13 @@ jobs:
           if [ $? -eq 0 ]; then
             echo "=== Debug build SUCCESS ==="
             echo "Checking if APK exists..."
-            if [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
+            if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
               echo "APK file found!"
-              ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+              ls -lh app/build/outputs/apk/debug/app-debug.apk
             else
               echo "WARNING: APK file not found!"
               echo "Build directory contents:"
-              ls -la android/app/build/outputs/apk/debug/ || true
+              ls -la app/build/outputs/apk/debug/ || true
               exit 1
             fi
           else
@@ -119,13 +118,13 @@ jobs:
           if [ $? -eq 0 ]; then
             echo "=== Release build SUCCESS ==="
             echo "Checking if APK exists..."
-            if [ -f "android/app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
+            if [ -f "app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
               echo "APK file found!"
-              ls -lh android/app/build/outputs/apk/release/app-release-unsigned.apk
+              ls -lh app/build/outputs/apk/release/app-release-unsigned.apk
             else
               echo "WARNING: APK file not found!"
               echo "Build directory contents:"
-              ls -la android/app/build/outputs/apk/release/ || true
+              ls -la app/build/outputs/apk/release/ || true
               exit 1
             fi
           else
